@@ -1,0 +1,6 @@
+github.com/eduardohitek/event-models v1.0.0 h1:zOiVbeX3T9pygy1kJWJDhsVUmz/Gwr72LB7tKnuxd5g=
+github.com/eduardohitek/event-models v1.0.0/go.mod h1://HpM5ctJchKBOSfr1gpOET91qOui86Zt+oriKbXheY=
+github.com/streadway/amqp v1.0.0 h1:kuuDrUJFZL1QYL9hUNuCxNObNzB0bV/ZG5jV3RWAQgo=
+github.com/streadway/amqp v1.0.0/go.mod h1:AZpEONHx3DKn8O/DFsRAY58/XVQiIPMTMB1SddzLXVw=
+github.com/wagslane/go-rabbitmq v0.6.2 h1:2t7GuMBvbJaM8jQGsyZMsdE/eoeve1Z+/pP/ZqabQO8=
+github.com/wagslane/go-rabbitmq v0.6.2/go.mod h1:Tu4DtAT7Ta9oKhHgEj29QEtIaA/jLLGLkleA/csZoOs=
