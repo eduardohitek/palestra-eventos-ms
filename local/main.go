@@ -120,7 +120,7 @@ func publishRandomPedidos(publisher rabbitmq.Publisher) {
 	for {
 		pedido := generateRandomPedido()
 		evento := models.Evento{Tipo: "pedido-criado", Pedido: pedido, Origem: "Local"}
-		publishEvent(evento, "local.criar.pedidos", "pedidos", publisher)
+		publishEvent(evento, "local.criar.pedido", "pedidos", publisher)
 		time.Sleep(5 * time.Second)
 	}
 }

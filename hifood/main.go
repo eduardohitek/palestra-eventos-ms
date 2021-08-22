@@ -112,8 +112,8 @@ func publish(publisher rabbitmq.Publisher, evento []byte, exchangeName string, p
 func publishRandomPedidos(publisher rabbitmq.Publisher) {
 	for {
 		pedido := generateRandomPedido()
-		evento := models.Evento{Tipo: "criar-pedido", Pedido: pedido, Origem: "HiFood"}
-		publishEvent(evento, "hifood.criar.pedidos", "pedidos", publisher)
+		evento := models.Evento{Tipo: "pedido-criado", Pedido: pedido, Origem: "HiFood"}
+		publishEvent(evento, "hifood.criar.pedido", "pedidos", publisher)
 		time.Sleep(5 * time.Second)
 	}
 }

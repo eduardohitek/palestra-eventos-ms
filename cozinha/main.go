@@ -19,7 +19,7 @@ func main() {
 	color.Set(color.FgYellow, color.Bold)
 	consumer := createConsumer("amqp://guest:guest@localhost")
 	publisher := createPublisher("amqp://guest:guest@localhost")
-	go startConsuming(consumer, publisher, "pedidos", "cozinha", 10, "*.criar.pedidos", processEvent)
+	go startConsuming(consumer, publisher, "pedidos", "cozinha", 10, "*.criar.pedido", processEvent)
 	forever := make(chan struct{})
 	<-forever
 }
