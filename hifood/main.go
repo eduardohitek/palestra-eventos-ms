@@ -5,7 +5,6 @@ import (
 	"log"
 	"math"
 	"math/rand"
-	"strings"
 	"time"
 
 	models "github.com/eduardohitek/event-models"
@@ -60,18 +59,17 @@ func parseEventoToJSON(evento models.Evento) ([]byte, error) {
 	return eventoJSON, err
 }
 
-func processEvent(evento models.Evento, publishKey string, exchangeName string) {
+func processEvent(evento models.Evento) {
 	log.Printf("Pedido ID: %d - Resposta da cozinha: %s", evento.Pedido.SystemID, evento.Tipo)
 }
 
 func startConsuming(consumer rabbitmq.Consumer, exchangeName string, queueName string,
 	concurrencyNumber int, routingKey string,
-	handler func(evento models.Evento, publishKey string, exchangeName string)) {
+	handler func(evento models.Evento)) {
 	err := consumer.StartConsuming(
 		func(d rabbitmq.Delivery) bool {
 			evento, _ := parseJSONToEvent(d.Body)
-			publishKey := parseRoutingKey(d.RoutingKey)
-			handler(evento, publishKey, d.Exchange)
+			handler(evento)
 			return true
 		},
 		queueName,
@@ -85,10 +83,6 @@ func startConsuming(consumer rabbitmq.Consumer, exchangeName string, queueName s
 	if err != nil {
 		log.Fatal(err)
 	}
-}
-
-func parseRoutingKey(publishKey string) string {
-	return strings.Split(publishKey, ".")[0] + ".pedidos"
 }
 
 func publishEvent(evento models.Evento, publishKey string, exchangeName string, publisher rabbitmq.Publisher) {
