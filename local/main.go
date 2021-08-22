@@ -14,14 +14,15 @@ import (
 	rabbitmq "github.com/wagslane/go-rabbitmq"
 )
 
-var sabores = []string{"Portuguese", "Calabresa", "4 Queijos", "Napolitana", "Frango", "Frango e Bacon"}
+var sabores = []string{"Portuguesa", "Calabresa", "4 Queijos", "Napolitana", "Frango",
+	"Frango e Bacon", "Moda da Casa"}
 var tamanhos = []string{"P", "M", "G"}
 
 func main() {
 	color.Set(color.FgYellow, color.Bold)
 	consumer := createConsumer("amqp://guest:guest@localhost")
 	publisher := createPublisher("amqp://guest:guest@localhost")
-	go startConsuming(consumer, "pedidos", "hifood", 10, "hifood.*", processEvent)
+	go startConsuming(consumer, "pedidos", "local", 10, "local.*", processEvent)
 	go publishRandomPedidos(publisher)
 	forever := make(chan struct{})
 	<-forever
@@ -118,8 +119,8 @@ func publish(publisher rabbitmq.Publisher, evento []byte, exchangeName string, p
 func publishRandomPedidos(publisher rabbitmq.Publisher) {
 	for {
 		pedido := generateRandomPedido()
-		evento := models.Evento{Tipo: "criar-pedido", Pedido: pedido, Origem: "HiFood"}
-		publishEvent(evento, "hifood.criar.pedidos", "pedidos", publisher)
+		evento := models.Evento{Tipo: "pedido-criado", Pedido: pedido, Origem: "Local"}
+		publishEvent(evento, "local.criar.pedidos", "pedidos", publisher)
 		time.Sleep(5 * time.Second)
 	}
 }
