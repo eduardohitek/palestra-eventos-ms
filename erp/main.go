@@ -13,30 +13,10 @@ import (
 
 func main() {
 	color.Set(color.FgYellow, color.Bold)
-	consumer, _ := createConsumer("amqp://guest:guest@localhost")
+	consumer := createConsumer("amqp://guest:guest@localhost")
 	go startConsuming(consumer, "pedidos", "erp", 10, "*.pedidos", processEvent)
 	forever := make(chan struct{})
 	<-forever
-}
-
-func createConsumer(url string) (rabbitmq.Consumer, error) {
-	consumer, err := rabbitmq.NewConsumer(
-		url, amqp.Config{},
-		rabbitmq.WithConsumerOptionsLogging,
-	)
-	return consumer, err
-}
-
-func parseJSONToEvent(eventJSON []byte) (models.Evento, error) {
-	var evento models.Evento
-	err := json.Unmarshal(eventJSON, &evento)
-	return evento, err
-}
-
-func processEvent(evento models.Evento, publishKey string, exchangeName string) {
-	fmt.Printf("Registro recebido - ID: %s, origem: %s, status: %s, valor: %.2f\n", evento.Pedido.ID,
-		evento.Origem, evento.Tipo, evento.Pedido.Valor)
-
 }
 
 func startConsuming(consumer rabbitmq.Consumer, exchangeName string, queueName string,
@@ -44,7 +24,10 @@ func startConsuming(consumer rabbitmq.Consumer, exchangeName string, queueName s
 	handler func(evento models.Evento, publishKey string, exchangeName string)) {
 	err := consumer.StartConsuming(
 		func(d rabbitmq.Delivery) bool {
-			evento, _ := parseJSONToEvent(d.Body)
+			evento, err := parseJSONToEvent(d.Body)
+			if err != nil {
+				log.Fatal(err)
+			}
 			handler(evento, "", d.Exchange)
 			return true
 		},
@@ -59,4 +42,30 @@ func startConsuming(consumer rabbitmq.Consumer, exchangeName string, queueName s
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func processEvent(evento models.Evento, publishKey string, exchangeName string) {
+	if evento.Tipo == "pedido-rejeitado" {
+		color.Set(color.FgRed, color.Bold)
+	}
+	fmt.Printf("Registro recebido - ID: %s, origem: %s, status: %s, valor: %.2f\n", evento.Pedido.ID,
+		evento.Origem, evento.Tipo, evento.Pedido.Valor)
+	color.Set(color.FgYellow, color.Bold)
+}
+
+func createConsumer(url string) rabbitmq.Consumer {
+	consumer, err := rabbitmq.NewConsumer(
+		url, amqp.Config{},
+		rabbitmq.WithConsumerOptionsLogging,
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return consumer
+}
+
+func parseJSONToEvent(eventJSON []byte) (models.Evento, error) {
+	var evento models.Evento
+	err := json.Unmarshal(eventJSON, &evento)
+	return evento, err
 }

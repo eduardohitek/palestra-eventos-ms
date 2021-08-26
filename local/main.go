@@ -28,6 +28,40 @@ func main() {
 	<-forever
 }
 
+func startConsuming(consumer rabbitmq.Consumer, exchangeName string, queueName string,
+	concurrencyNumber int, routingKey string,
+	handler func(evento models.Evento, publishKey string, exchangeName string)) {
+	err := consumer.StartConsuming(
+		func(d rabbitmq.Delivery) bool {
+			evento, err := parseJSONToEvent(d.Body)
+			if err != nil {
+				log.Fatal(err)
+			}
+			publishKey := parseRoutingKey(d.RoutingKey)
+			handler(evento, publishKey, d.Exchange)
+			return true
+		},
+		queueName,
+		[]string{routingKey},
+		rabbitmq.WithConsumeOptionsConcurrency(10),
+		rabbitmq.WithConsumeOptionsQueueDurable,
+		rabbitmq.WithConsumeOptionsBindingExchangeName(exchangeName),
+		rabbitmq.WithConsumeOptionsBindingExchangeKind("topic"),
+		rabbitmq.WithConsumeOptionsBindingExchangeDurable,
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func processEvent(evento models.Evento, publishKey string, exchangeName string) {
+	if evento.Tipo == "pedido-rejeitado" {
+		color.Set(color.FgRed, color.Bold)
+	}
+	log.Printf("Pedido ID: %d - Resposta da cozinha: %s", evento.Pedido.SystemID, evento.Tipo)
+	color.Set(color.FgYellow, color.Bold)
+}
+
 func createConsumer(url string) rabbitmq.Consumer {
 	consumer, err := rabbitmq.NewConsumer(
 		url, amqp.Config{},
@@ -59,33 +93,6 @@ func parseJSONToEvent(eventJSON []byte) (models.Evento, error) {
 func parseEventoToJSON(evento models.Evento) ([]byte, error) {
 	eventoJSON, err := json.Marshal(evento)
 	return eventoJSON, err
-}
-
-func processEvent(evento models.Evento, publishKey string, exchangeName string) {
-	log.Printf("Pedido ID: %d - Resposta da cozinha: %s", evento.Pedido.SystemID, evento.Tipo)
-}
-
-func startConsuming(consumer rabbitmq.Consumer, exchangeName string, queueName string,
-	concurrencyNumber int, routingKey string,
-	handler func(evento models.Evento, publishKey string, exchangeName string)) {
-	err := consumer.StartConsuming(
-		func(d rabbitmq.Delivery) bool {
-			evento, _ := parseJSONToEvent(d.Body)
-			publishKey := parseRoutingKey(d.RoutingKey)
-			handler(evento, publishKey, d.Exchange)
-			return true
-		},
-		queueName,
-		[]string{routingKey},
-		rabbitmq.WithConsumeOptionsConcurrency(10),
-		rabbitmq.WithConsumeOptionsQueueDurable,
-		rabbitmq.WithConsumeOptionsBindingExchangeName(exchangeName),
-		rabbitmq.WithConsumeOptionsBindingExchangeKind("topic"),
-		rabbitmq.WithConsumeOptionsBindingExchangeDurable,
-	)
-	if err != nil {
-		log.Fatal(err)
-	}
 }
 
 func parseRoutingKey(publishKey string) string {
@@ -126,6 +133,7 @@ func publishRandomPedidos(publisher rabbitmq.Publisher) {
 }
 
 func generateRandomPedido() models.Pedido {
+	rand.Seed(time.Now().UTC().UnixNano())
 	pedido := models.Pedido{SystemID: rand.Intn(999), Sabor: getRandomItem(sabores),
 		Tamanho: getRandomItem(tamanhos), Valor: float32(math.Round(rand.Float64() * 100))}
 	return pedido
